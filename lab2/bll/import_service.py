@@ -1,9 +1,9 @@
 from datetime import datetime
-from core.models import Movie, Serial
+from core.models import Movie, Serial, Content
 from core.interfaces import IContentRepository, IFileService
 
 class ContentManagerService:
-    def __init__(self, repo: IContentRepository, file_service: IFileService):
+    def __init__(self, repo: IContentRepository, file_service: IFileService = None):
         self.repo = repo
         self.file_service = file_service
 
@@ -49,3 +49,15 @@ class ContentManagerService:
             self.repo.add(obj)
             
         self.repo.commit()
+
+    def get_all_content(self):
+        """Business logic data validation"""
+        return Content.query.all()
+
+    def remove_content(self, content_id: int):
+        """Business logic for removing data)"""
+        item = Content.query.get(content_id)
+        if item:
+            from core.models import db
+            db.session.delete(item)
+            db.session.commit()

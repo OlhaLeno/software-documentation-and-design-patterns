@@ -18,11 +18,11 @@ def generate(count=1000):
         
         writer.writeheader()
         
+        genres = ['Drama', 'Comedy', 'Action', 'Sci-Fi', 'Horror', 'Documentary', 'Thriller', 'Mystery']
+        
         for _ in range(count):
             c_type = fake.random_element(['movie', 'serial'])
-            
             rating_num = round(random.uniform(1.0, 9.9), 1)
-            
             rating_str = f" {rating_num}"
             
             if c_type == 'movie':
@@ -37,10 +37,10 @@ def generate(count=1000):
             row = {
                 'title': fake.catch_phrase(),
                 'type': c_type,
-                'description': fake.paragraph(nb_sentences=2),
+                'description': fake.paragraph(nb_sentences=3),
                 'releaseDate': fake.date_between(start_date='-25y', end_date='today').strftime('%Y-%m-%d'),
                 'rating': rating_str,
-                'genre': fake.random_element(['Drama', 'Comedy', 'Action', 'Sci-Fi', 'Horror', 'Documentary']),
+                'genre': fake.random_element(genres),
                 'director': fake.name(),
                 'duration': duration,
                 'seasonsCount': seasons,
