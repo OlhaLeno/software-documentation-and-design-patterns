@@ -1,3 +1,4 @@
+import os
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from datetime import datetime
 from core.models import db, Content, Movie, Serial
@@ -36,13 +37,31 @@ def index():
     catalog = service.get_all_content()
     return render_template('index.html', catalog=catalog)
 
-@content_bp.route('/import')
+@content_bp.route('/import', methods=['POST'])
 def start_import():
-    try:
-        service.process_import('data.csv')
-        flash('Data imported successfully!', 'success')
-    except Exception as e:
-        flash(f'Import error: {e}', 'danger')
+    file = request.files.get('file')
+    if file and file.filename.endswith('.csv'):
+        path = os.path.join(os.getcwd(), 'data.csv')
+        file.save(path)
+        try:
+            db.session.execute(db.delete(Movie))
+            db.session.execute(db.delete(Serial))
+            db.session.execute(db.delete(Content))
+            db.session.commit()
+            service.process_import(path)
+            flash('Data imported successfully!', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Import error: {e}', 'danger')
+        finally:
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                except PermissionError:
+                    pass
+    else:
+        flash('Please upload a valid CSV file.', 'warning')
+
     return redirect(url_for('content.index'))
 
 @content_bp.route('/add', methods=['GET', 'POST'])

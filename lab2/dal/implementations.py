@@ -26,4 +26,5 @@ class CsvFileService(IFileService):
                 f.seek(0)
             
             reader = csv.DictReader(f, skipinitialspace=True)
-            return list(reader)
+            data = list(reader) 
+        return data
