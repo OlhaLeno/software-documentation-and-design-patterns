@@ -37,3 +37,52 @@ class KafkaOutputStrategy(IOutputStrategy):
             self.producer.send(self.topic, row)
         self.producer.flush()
         print("Successfully sent to Kafka.")
+
+class FirebaseOutputStrategy(IOutputStrategy):
+    def __init__(self, cred_path: str, collection_name: str):
+        import firebase_admin
+        from firebase_admin import credentials, firestore
+        
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(cred_path)
+            firebase_admin.initialize_app(cred)
+        
+        self.db = firestore.client()
+        self.collection_name = collection_name
+
+    def output(self, data):
+        from google.api_core.exceptions import ResourceExhausted, RetryError 
+
+        print(f"--- Sending data to Firebase Firestore (collection: {self.collection_name}) ---")
+        collection_ref = self.db.collection(self.collection_name)
+        
+        batch = self.db.batch()
+        total_written = 0
+        batch_count = 0
+        
+        print(f"Uploading {len(data)} records in batches... Please wait.")
+        
+        try:
+            for row in data:
+                doc_ref = collection_ref.document()
+                batch.set(doc_ref, row)
+                batch_count += 1
+                
+                if batch_count == 400:
+                    batch.commit()
+                    total_written += batch_count
+                    print(f"Uploaded {total_written} records...")
+                    batch = self.db.batch()
+                    batch_count = 0
+            
+            if batch_count > 0:
+                batch.commit()
+                total_written += batch_count
+                
+            print(f"Successfully sent {total_written} records to Firebase Firestore.")
+            
+        except (ResourceExhausted, RetryError):
+            print(f"\nWarning: Reached the daily Firebase limit (20,000 records) or timeout!")
+            print(f"{total_written} records were successfully saved to the cloud during this run.")
+        except Exception as e:
+            print(f"\nAn unexpected error occurred: {e}")

@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 from processor import DataProcessor
-from strategies import ConsoleOutputStrategy, RedisOutputStrategy, KafkaOutputStrategy
+from strategies import ConsoleOutputStrategy, RedisOutputStrategy, KafkaOutputStrategy, FirebaseOutputStrategy
 
 def get_strategy_from_config():
     """Factory method to select a strategy based on configuration"""
@@ -17,6 +17,11 @@ def get_strategy_from_config():
         return KafkaOutputStrategy(
             servers=os.getenv('KAFKA_BOOTSTRAP_SERVERS', 'localhost:9092'),
             topic=os.getenv('KAFKA_TOPIC', 'nypd_shootings_topic')
+        )
+    elif strategy_name == 'firebase':
+        return FirebaseOutputStrategy(
+            cred_path=os.getenv('FIREBASE_CREDENTIALS', 'firebase-key.json'),
+            collection_name=os.getenv('FIREBASE_COLLECTION', 'nypd_shootings')
         )
     else:
         return ConsoleOutputStrategy()
